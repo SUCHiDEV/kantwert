@@ -1,0 +1,61 @@
+* {
+    box-sizing: border-box;
+}
+
+body, html {
+    margin: 0;
+    padding: 0;
+}
+
+.headTitle {
+    margin: 10px 10vw;
+    text-align: center;
+}
+
+.box {
+    position: relative;
+    padding: 5px 5px;
+    border: 1px solid;
+    margin: 10px 10vw;
+}
+
+.menu {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+}
+
+.hidden {
+    display: none;
+}
+
+button {
+    padding: 3px 10px;
+}
+
+pre {
+    outline: 1px solid #ccc;
+    padding: 5px;
+    margin: 5px;
+}
+
+.string {
+    color: green;
+}
+.number {
+    color: darkorange;
+}
+.boolean {
+    color: blue;
+}
+.null {
+    color: magenta;
+}
+.key {
+    color: red;
+}
+
+input {
+    display: block;
+    width: 100%;
+}

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+
+        <title>Kantwert Task</title>
+        <meta name="description" content="Kantwert Task">
+        <meta name="author" content="Dawid Tomkowiak">
+
+        <link rel="stylesheet" type="text/css" href="css/styles.css">
+    </head>
+    <body>
+        <h1 class="headTitle">Kantwert Task</h1>
+        <div class="box menu">
+            <button id="graphButton" onclick="showGraph()">
+                Graph Visualization
+            </button>
+            <button id="tableButton" onclick="showTable()">
+                Table Visualization
+            </button>
+            <button id="prettyButton" onclick="showPretty()">
+                Pretty Printer
+            </button>
+        </div>
+        <div id="contentBox" class="box">
+            Content area
+        </div>
+        <div id="prettyPrintBox" class="box hidden">
+            <input id="uglyInput" placeholder="Input JSON">
+            <button onclick="prettyPrint()">Pretty print</button>
+            <pre id="prettyResult"></pre>
+        </div>
+        <script src="js/scripts.js"></script>
+    </body>
+</html>
