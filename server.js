@@ -1,8 +1,6 @@
 var http = require('http'),
     path = require('path'),
     fs = require('fs'),
-
-//these are the only file types we will support for now
     extensions = {
         ".html" : "text/html",
         ".css" : "text/css",
@@ -11,7 +9,7 @@ var http = require('http'),
         ".gif" : "image/gif",
         ".jpg" : "image/jpeg",
         ".json": "application/json",
-    };
+    };//these are the only file types we will support for now
 
 //helper function handles file verification
 function getFile(filePath,res,page404,mimeType){

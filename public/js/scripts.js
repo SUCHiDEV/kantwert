@@ -1,19 +1,17 @@
 var dataObject = {},
-    graphButton = window.document.getElementById('graphButton'),
-    tableButton = window.document.getElementById('tableButton'),
-    prettyButton = window.document.getElementById('prettyButton'),
+    filteredTableData = [],
+    currentTableData = [],
+    pagination = 1,
+    currentView = null,
     prettyPrintBox = window.document.getElementById('prettyPrintBox'),
-    prettyResult = window.document.getElementById('prettyResult'),
     contentBox = window.document.getElementById('contentBox');
 
 function showGraph(){
     toggleContent('graph');
-    clearPrettyPrint();
 }
 
 function showTable(){
     toggleContent('table');
-    clearPrettyPrint();
 }
 
 function showPretty(){
@@ -21,13 +19,16 @@ function showPretty(){
 }
 
 function toggleContent(type){
+    if (currentView === type) return;
+    currentView = type;
     if (type === 'pretty'){
         hide(contentBox);
         show(prettyPrintBox);
     } else {
+        clearPrettyPrint();
         hide(prettyPrintBox);
         show(contentBox);
-        (dataObject[type]) ? setContentBoxText(dataObject[type]) : getData(type);
+        (dataObject[type]) ? setContentBox(type) : getData(type);
     }
 }
 
@@ -41,26 +42,164 @@ function hide(element){
 
 function getData(type){
     var request = new XMLHttpRequest();
+    (!type) ? type = 'graph' : null;
 
     request.onreadystatechange = function() {
         if(request.readyState === 4) {
             if(request.status === 200) {
                 contentBox.style.border = '1px solid green';
-                dataObject[type] = request.responseText;
-                setContentBoxText(request.responseText);
+                updateData(JSON.parse(request.responseText));
+                setContentBox(type);
             } else {
                 contentBox.style.border = '1px solid red';
-                setContentBoxText('An error occurred during your request: ' +  request.status + ' ' + request.statusText);
+                contentBox.innerHTML = 'An error occurred during your request: ' +  request.status + ' ' + request.statusText;
             }
         }
     };
 
-    request.open('GET', 'api/'+type+'.json');
+    request.open('GET', 'api/data.json');
     request.send();
 }
 
-function setContentBoxText(text){
-    contentBox.innerHTML = text;
+
+function updateData(data){
+   dataObject = data;
+   updateCurrentTableData(dataObject['table']);
+}
+
+function setContentBox(type){
+    switch (type) {
+        case 'graph':
+            contentBox.innerHTML = getHighlightedText(dataObject[type]);
+            break;
+        case 'table':
+            getTable(filteredTableData);
+            break;
+        default:
+            contentBox.innerHTML = getHighlightedText(dataObject[type]);
+    }
+}
+
+function getHighlightedText(data){
+    return syntaxHighlight(JSON.stringify(data, undefined, 4));
+}
+
+function getTable(data){
+    currentTableData = JSON.parse(JSON.stringify(paginateData(data)));
+    renderTableMenu();
+    renderTable(currentTableData);
+}
+
+function nextTablePage(){
+    var paginationRest = ((filteredTableData.length % 10) > 0) ? 1 : 0,
+        maxPages = parseInt(filteredTableData.length / 10) + paginationRest;
+    if (pagination < maxPages) {
+        pagination++;
+        refreshTable();
+    }
+}
+
+function previousTablePage(){
+    if (pagination > 1) {
+        pagination--;
+        refreshTable();
+    }
+}
+
+function paginateData(data){
+    return JSON.parse(JSON.stringify(data)).splice(10*(pagination-1), 10);
+}
+
+function updateCurrentTableData(data){
+    var newData = JSON.parse(JSON.stringify(data)),
+        searchValue = getTableSearchValue();
+    if (searchValue !== ''){
+        filteredTableData = newData.filter(function(element){
+            var isMatch = false;
+            Object.keys(element).forEach(function(key){
+                if (element[key].toString().toLowerCase().search(searchValue.toLowerCase()) > -1) isMatch = true;
+            });
+            return isMatch;
+        });
+        return;
+    }
+    filteredTableData = newData;
+}
+
+function searchTable(){
+    pagination = 1;
+    refreshTable();
+}
+
+function refreshTable(){
+    updateCurrentTableData(dataObject['table']);
+    setContentBox('table');
+}
+
+function renderTableMenu(){
+    if (window.document.getElementById('tableMenu')) return;
+    contentBox.innerHTML = (
+        '<div id="tableMenu">' +
+            '<h1>Table title</h1>' +
+            '<input type="text" placeholder="Input global search phrase" name="searchTable" value="" id="tableSearchInput">' +
+            '<button onclick="previousTablePage()">Previous Page</button>' +
+            '<button onclick="nextTablePage()">Next Page</button>' +
+        '</div>' +
+        '<table id="tableBody"></table>'
+    );
+    window.document.getElementById("tableSearchInput").addEventListener('input', searchTable);
+}
+
+function renderTable(data){
+    var tableHead = '',
+        tableRows = '',
+        tableElement = window.document.getElementById('tableBody');
+    if (!tableElement) return;
+    if (data.length) {
+        Object.keys(data[0]).forEach(function (key) { tableHead += ('<td>' + key + '</td>'); });
+        tableHead += ('<td>Action</td>');
+        for (var i = 0; i < data.length; i++) {
+            var dataElement = data[i],
+                row = '';
+            Object.keys(dataElement).forEach(function (key) {
+                switch (key){
+                    case 'profilePicture':
+                        row += ('<td><img src='+ dataElement[key] +'></td>');
+                        break;
+                    case 'index':
+                        row += ('<td>' + parseFloat(dataElement[key]+1) + '</td>');
+                        break;
+                    default:
+                        row += ('<td>' + dataElement[key] + '</td>');
+                        break;
+                }
+            });
+            row += (
+                '<td>' +
+                '<button onclick="actionButton(1)">Action 1</button>' +
+                '<button onclick="actionButton(2)">Action 2</button>' +
+                '<button onclick="actionButton(3)">Action 3</button>' +
+                '</td>'
+            );
+            tableRows += ('<tr>' + row + '</tr>');
+        }
+        return tableElement.innerHTML = (
+            '<thead>' +
+            '<tr>' +
+            tableHead +
+            '</tr>'+
+            '</thead>' +
+            '<tbody>' +
+            tableRows +
+            '</tbody>'
+        );
+    }
+    return tableElement.innerHTML = 'No data';
+}
+
+function getTableSearchValue(){
+    var element = window.document.getElementById('tableSearchInput');
+    return (element) ? element.value : '';
 }
 
 function prettyPrint() {
@@ -96,5 +235,9 @@ function syntaxHighlight(json) {
         }
         return '<span class="' + cls + '">' + match + '</span>';
     });
+}
+
+function actionButton(number){
+    console.log('actionButton nr '+ number +' clicked');
 }
 
